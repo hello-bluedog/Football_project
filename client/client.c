@@ -11,7 +11,6 @@ char *path = "footballd.conf";
 int server_port;
 int sockfd = -1;
 char server_ip[20] = {0};
-
 void logout(int signum){
     struct ChatMsg msg;
     msg.type = CHAT_FIN;
@@ -72,12 +71,13 @@ int main(int argc, char **argv){
         exit(1);
     } else if (retval){
        int ret = recvfrom(sockfd, (void *)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
-        if (ret != -1 || response.type == 1 || ret != sizeof(response)){
+        if (ret == -1 || response.type == 1 || ret != sizeof(response)){
             DBG(RED"server refuse to accept %s!\n", response.msg);
             exit(1);
         } 
     } else {
-        DBG(RED"Error"NONE"The game Server is out of service!\n");  
+        DBG(RED"Error"NONE"The game Server is out of service!\n");
+        exit(1);
         }
 
         if (connect(sockfd, (struct sockaddr *)&server, len) < 0){
@@ -91,16 +91,22 @@ int main(int argc, char **argv){
         //bzero(&response, sizeof(response));
         //recv(sockfd, response.msg, sizeof(response.msg), 0)
         //DBG(RED"Server Info:"NONE" %s\n", response.msg);
+        pthread_t recv_t;
+        pthread_create(&recv_t, NULL, do_recv, NULL);
         signal(SIGINT, logout);
-        while(1){
+        while(1){        
             struct ChatMsg msg;
+            bzero(&msg, sizeof(msg));
             msg.type = CHAT_WALL;
-            printf(RED"please input : \n"NONE);
+            strcpy(msg.name, request.name);
             scanf("%[^\n]s", msg.msg);
             getchar();
-            send(sockfd, (void *)&msg, sizeof(msg), 0);
+            if (strlen(msg.msg)) {
+                if (msg.msg[0] == '@') msg.type = CHAT_MSG;
+                if (msg.msg[0] == '#') msg.type = CHAT_FUNC;
+                send(sockfd, (void *)&msg, sizeof(msg), 0);            
+            };
         }
-    
 
     return 0;
 }

@@ -11,11 +11,46 @@ extern struct User *rteam;
 extern struct User *bteam;
 extern int repollfd, bepollfd;
 extern int port;
+void send_all(struct ChatMsg *msg)
+{
+    for (int i = 0; i < MAX; i++) {
+        if (bteam[i].online) {
+            send(bteam[i].fd, (void *)msg, sizeof(struct ChatMsg), 0);    
+        }
+        if (rteam[i].online) {
+            send(rteam[i].fd, (void *)msg, sizeof(struct ChatMsg), 0);    
+        }   
+    }
+}
+
+void send_to(char *to, struct ChatMsg *msg, int fd)
+{
+    int flag = 0;
+    for (int i = 0; i < MAX; i++) { //需要校正i
+        if (rteam[i].online && !strcmp(to, rteam[i].name)) {
+            send(rteam[i].fd, msg, sizeof(struct ChatMsg), 0);
+            flag = 1;
+            break;
+        }
+        if (bteam[i].online && !strcmp(to, bteam[i].name)) {
+            send(bteam[i].fd, msg, sizeof(struct ChatMsg), 0);
+            flag = 1;
+            break;             
+        }
+    }
+    if (!flag) {
+        memset(msg->msg, 0, sizeof(msg->msg));
+        strcpy(msg->name, to);
+        sprintf(msg->msg, "用户 %s 不在线，或用户名错误！", to);
+        msg->type = CHAT_SYS;
+        send(fd, msg, sizeof(struct ChatMsg), 0);    
+    }
+}
 
 void add_event_ptr(int epollfd, int fd, int events, struct User* user) {
     struct epoll_event ev;
     ev.events = events;
-    ev.data.ptr = (void *)user;
+    ev.data.ptr = user;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
 }
 
@@ -31,7 +66,7 @@ int find_sub(struct User *team){
 }
 int udp_connect(struct sockaddr_in *client){
     int sockfd;
-    if((sockfd = socket_udp()) < 0){
+    if((sockfd = socket_create_udp(port)) < 0){
         perror("socket_udp");
         return -1;
     }
@@ -99,11 +134,11 @@ void add_to_sub_reactor(struct User *user){
     team[sub] = *user;
     team[sub].online = 1;
     team[sub].flag = 10;
-    DBG(L_RED"sub = %d, name = %s\n", sub, team[sub].name);
+    DBG(L_RED"sub = %d, name = %s\n", sub, user->name);
     if (user->team){
-        add_event_ptr(bepollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
+        add_event_ptr(bepollfd, user->fd, EPOLLIN | EPOLLET, user);
     } else {
-        add_event_ptr(repollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
+        add_event_ptr(repollfd, user->fd, EPOLLIN | EPOLLET, user);
     }
     return;
 }
