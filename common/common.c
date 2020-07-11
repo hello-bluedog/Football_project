@@ -1,6 +1,7 @@
 #include "head.h"
 char conf_ans[50] = {0};
-int socket_create_tcp(int port){
+    
+int socket_create(int port){
 
     int sockfd;
     struct sockaddr_in server;
@@ -14,36 +15,11 @@ int socket_create_tcp(int port){
     server.sin_port = htons(port);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     
+    int reuse = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int));
     if(bind(sockfd, (struct sockaddr*)&server, sizeof(server) )< 0){
         return -1;
     }
-    int reuse = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int));
-    if(listen(sockfd, 10) < 0){
-        return -1;
-        
-    }
-    return sockfd;
-}
-int socket_create_udp(int port){
-
-    int sockfd;
-    struct sockaddr_in server;
-    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
-
-        return -1;
-
-    }
-
-    server.sin_family = AF_INET;
-    server.sin_port = htons(port);
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    
-    if(bind(sockfd, (struct sockaddr*)&server, sizeof(server) )< 0){
-        return -1;
-    }
-    int reuse = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int));
     if(listen(sockfd, 10) < 0){
         return -1;
         

@@ -8,19 +8,16 @@
 #include "head.h"
 
 int socket_create_udp(int port){
-
     int server_listen = 0;
 
     server_listen = socket(AF_INET, SOCK_DGRAM, 0);
-    printf("%d\n", server_listen);
     if( server_listen < 0){
         return -1;
     }
 
-    printf("successe1\n");
     struct sockaddr_in server;
     server.sin_family = AF_INET;
-    server.sinport = htons(port);
+    server.sin_port = htons(port);
     server.sin_addr.s_addr = INADDR_ANY;
 
     int opt = 1;
@@ -31,7 +28,7 @@ int socket_create_udp(int port){
     if(bind(server_listen, (struct sockaddr *)&server, sizeof(server)) < 0){
         return -1;
     }
-    printf("bindsuccess\n");
+    
     return server_listen;
 }
 
