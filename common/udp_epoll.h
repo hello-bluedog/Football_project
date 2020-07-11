@@ -9,6 +9,7 @@
 #define _UDP_EPOLL_H
 void send_to(char *to, struct ChatMsg *msg, int fd);
 void send_all(struct ChatMsg *msg);
+void disp_list(struct User *user);
 int udp_accept(int fd, struct User *user);
 int udp_connect(struct sockaddr_in *client);
 void del_event(int epollfd, int fd);

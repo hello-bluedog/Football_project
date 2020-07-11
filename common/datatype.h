@@ -42,6 +42,7 @@ struct User {
     int online;//1 在线 0 不在线
     int flag;//未响应次数
     struct Point loc;
+    int in;
 };
 //数据交互相关
 //登陆相关

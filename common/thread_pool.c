@@ -15,12 +15,17 @@ void do_work(struct User *user){
     recv(user->fd, (void *)&msg,sizeof(msg), 0);
     if(msg.type & CHAT_WALL){
         printf("<%s> ~ %s\n", msg.name, msg.msg);
-        struct ChatMsg r_msg;
-        bzero(&r_msg, sizeof(r_msg));
-        r_msg.type = CHAT_SYS;  //需要校正
         strcpy(msg.name, user->name);
-        sprintf(r_msg.msg, "你的好友 "RED"%s"NONE" 上线了，快打个招呼吧！",user->name);
-        send_all(&r_msg);
+        bzero(&r_msg, sizeof(r_msg));
+
+        if(!user->in){
+            user->in = 1;
+            struct ChatMsg r_msg;
+            bzero(&r_msg, sizeof(msg));
+            r_msg.type = CHAT_SYS;
+            sprintf(r_msg.msg, "你的好友 "RED"%s"NONE" 上线了，快打个招呼吧！",user->name);
+            send_all(&r_msg);
+        }
         send_all(&msg);        
     } else if(msg.type & CHAT_MSG){
         char to[20] = {0};
@@ -63,8 +68,10 @@ void do_work(struct User *user){
         }
         printf(GREEN"Server Info"NONE" : %s logout!\n", user->name);
         close(user->fd);
+    } else if (msg.type & CHAT_FUNC){
+        disp_list(user);
     } 
-
+}
 void task_queue_init(struct task_queue *taskQueue, int sum, int epollfd){
     taskQueue->sum = sum;
     taskQueue->epollfd = epollfd;
