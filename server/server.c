@@ -94,6 +94,7 @@ int main(int argc, char **argv){
         }
         for (int i = 0; i < nfds; i++){
             struct User user;
+            bzero(&user, sizeof(user));
             if (events[i].data.fd == listener){
                 int new_fd = udp_accept(listener,&user);
                 if(new_fd > 0){

@@ -22,7 +22,23 @@ void send_all(struct ChatMsg *msg)
         }   
     }
 }
-
+void disp_list(struct User *user) {
+    struct ChatMsg msg;
+    for (int i = 0; i < MAX; i++) {
+        if (rteam[i].online) {
+            bzero(&msg, sizeof(msg));
+            msg.type = CHAT_SYS;
+            sprintf(msg.msg, "Red team < %s > is online!", rteam[i].name);
+            send(user->fd, (void *)&msg, sizeof(msg), 0);    
+        }
+        if (bteam[i].online) {
+            bzero(&msg, sizeof(msg));
+            msg.type = CHAT_SYS;
+            sprintf(msg.msg, "Blue team < %s > is online!", bteam[i].name);
+            send(user->fd, (void *)&msg, sizeof(msg), 0);        
+        }
+    }
+}
 void send_to(char *to, struct ChatMsg *msg, int fd)
 {
     int flag = 0;
@@ -136,9 +152,9 @@ void add_to_sub_reactor(struct User *user){
     team[sub].flag = 10;
     DBG(L_RED"sub = %d, name = %s\n", sub, user->name);
     if (user->team){
-        add_event_ptr(bepollfd, user->fd, EPOLLIN | EPOLLET, user);
+        add_event_ptr(bepollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
     } else {
-        add_event_ptr(repollfd, user->fd, EPOLLIN | EPOLLET, user);
+        add_event_ptr(repollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
     }
     return;
 }
